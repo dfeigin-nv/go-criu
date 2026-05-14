@@ -753,6 +753,7 @@ type CriuOpts struct {
 	LeaveStopped         *bool                  `protobuf:"varint,69,opt,name=leave_stopped,json=leaveStopped" json:"leave_stopped,omitempty"`
 	DisplayStats         *bool                  `protobuf:"varint,70,opt,name=display_stats,json=displayStats" json:"display_stats,omitempty"`
 	LogToStderr          *bool                  `protobuf:"varint,71,opt,name=log_to_stderr,json=logToStderr" json:"log_to_stderr,omitempty"`
+	StreamRestore        *bool                  `protobuf:"varint,72,opt,name=stream_restore,json=streamRestore" json:"stream_restore,omitempty"`
 	// optional bool			check_mounts		= 128;
 	Stream        *bool `protobuf:"varint,129,opt,name=stream" json:"stream,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1285,6 +1286,13 @@ func (x *CriuOpts) GetDisplayStats() bool {
 func (x *CriuOpts) GetLogToStderr() bool {
 	if x != nil && x.LogToStderr != nil {
 		return *x.LogToStderr
+	}
+	return false
+}
+
+func (x *CriuOpts) GetStreamRestore() bool {
+	if x != nil && x.StreamRestore != nil {
+		return *x.StreamRestore
 	}
 	return false
 }
@@ -1826,7 +1834,7 @@ const file_rpc_rpc_proto_rawDesc = "" +
 	"\x04ctrl\x18\x01 \x01(\tR\x04ctrl\x12\x12\n" +
 	"\x04path\x18\x02 \x02(\tR\x04path\"\x1f\n" +
 	"\aunix_sk\x12\x14\n" +
-	"\x05inode\x18\x01 \x02(\rR\x05inode\"\xfd\x13\n" +
+	"\x05inode\x18\x01 \x02(\rR\x05inode\"\xa4\x14\n" +
 	"\tcriu_opts\x12&\n" +
 	"\rimages_dir_fd\x18\x01 \x02(\x05:\x02-1R\vimagesDirFd\x12\x1d\n" +
 	"\n" +
@@ -1916,7 +1924,8 @@ const file_rpc_rpc_proto_rawDesc = "" +
 	"\funprivileged\x18C \x01(\bR\funprivileged\x12#\n" +
 	"\rleave_stopped\x18E \x01(\bR\fleaveStopped\x12#\n" +
 	"\rdisplay_stats\x18F \x01(\bR\fdisplayStats\x12\"\n" +
-	"\rlog_to_stderr\x18G \x01(\bR\vlogToStderr\x12\x17\n" +
+	"\rlog_to_stderr\x18G \x01(\bR\vlogToStderr\x12%\n" +
+	"\x0estream_restore\x18H \x01(\bR\rstreamRestore\x12\x17\n" +
 	"\x06stream\x18\x81\x01 \x01(\bR\x06stream\",\n" +
 	"\x0ecriu_dump_resp\x12\x1a\n" +
 	"\brestored\x18\x01 \x01(\bR\brestored\"%\n" +
