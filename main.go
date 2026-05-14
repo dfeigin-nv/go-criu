@@ -19,10 +19,11 @@ const extraFilesStartFd = 3
 
 // Criu struct
 type Criu struct {
-	swrkCmd    *exec.Cmd
-	swrkSk     *os.File
-	swrkPath   string
-	inheritFds map[string]*os.File
+	swrkCmd           *exec.Cmd
+	swrkSk            *os.File
+	swrkPath          string
+	inheritFds        map[string]*os.File
+	streamPrivateSock *os.File
 }
 
 // MakeCriu returns the Criu object required for most operations
@@ -36,6 +37,18 @@ func MakeCriu() *Criu {
 // if it is in a non standard location
 func (c *Criu) SetCriuPath(path string) {
 	c.swrkPath = path
+}
+
+// SetStreamPrivateSock registers a Unix socket file the streamer
+// uses to send per-task pages memfds via SCM_RIGHTS. The socket fd
+// is passed to criu swrk via ExtraFiles (after all AddInheritFd
+// entries) and made discoverable to CRIU through the
+// CRIU_STREAMER_PRIVATE_SOCK env var.
+//
+// Pair with CriuOpts.StreamRestore = proto.Bool(true). Without that
+// flag the socket is ignored on the CRIU side.
+func (c *Criu) SetStreamPrivateSock(file *os.File) {
+	c.streamPrivateSock = file
 }
 
 // AddInheritFd registers a file descriptor to be passed to CRIU.
@@ -108,6 +121,19 @@ func (c *Criu) doPrepare(opts *rpc.CriuOpts) error {
 	}
 
 	c.ensureInheritFd(opts)
+
+	// Pipeline C: streamer private socket goes last (after InheritFd
+	// entries) so its fd number is deterministic from the CRIU side
+	// via CRIU_STREAMER_PRIVATE_SOCK env var.
+	if c.streamPrivateSock != nil {
+		streamFd := extraFilesStartFd + len(extraFiles)
+		extraFiles = append(extraFiles, c.streamPrivateSock)
+		if cmd.Env == nil {
+			cmd.Env = os.Environ()
+		}
+		cmd.Env = append(cmd.Env,
+			"CRIU_STREAMER_PRIVATE_SOCK="+strconv.Itoa(streamFd))
+	}
 
 	cmd.ExtraFiles = extraFiles
 
