@@ -24,6 +24,7 @@ type Criu struct {
 	swrkPath          string
 	inheritFds        map[string]*os.File
 	streamPrivateSock *os.File
+	streamShmemSock   *os.File
 }
 
 // MakeCriu returns the Criu object required for most operations
@@ -49,6 +50,15 @@ func (c *Criu) SetCriuPath(path string) {
 // flag the socket is ignored on the CRIU side.
 func (c *Criu) SetStreamPrivateSock(file *os.File) {
 	c.streamPrivateSock = file
+}
+
+// SetStreamShmemSock registers a Unix socket the streamer uses to send
+// per-shmid memfds via SCM_RIGHTS. Stage 2c shmem zero-copy path:
+// open_shmem in CRIU writes the shmid and recvs the memfd, which it
+// then mmaps as the target shmem VMA. Discovered by CRIU via the
+// CRIU_STREAMER_SHMEM_SOCK env var.
+func (c *Criu) SetStreamShmemSock(file *os.File) {
+	c.streamShmemSock = file
 }
 
 // AddInheritFd registers a file descriptor to be passed to CRIU.
@@ -122,9 +132,10 @@ func (c *Criu) doPrepare(opts *rpc.CriuOpts) error {
 
 	c.ensureInheritFd(opts)
 
-	// Pipeline C: streamer private socket goes last (after InheritFd
-	// entries) so its fd number is deterministic from the CRIU side
-	// via CRIU_STREAMER_PRIVATE_SOCK env var.
+	// Pipeline C: streamer sockets go last (after InheritFd entries)
+	// so their fd numbers are deterministic from the CRIU side via
+	// CRIU_STREAMER_{PRIVATE,SHMEM}_SOCK env vars. Private first, then
+	// shmem to keep fd numbers stable when shmem is absent.
 	if c.streamPrivateSock != nil {
 		streamFd := extraFilesStartFd + len(extraFiles)
 		extraFiles = append(extraFiles, c.streamPrivateSock)
@@ -133,6 +144,15 @@ func (c *Criu) doPrepare(opts *rpc.CriuOpts) error {
 		}
 		cmd.Env = append(cmd.Env,
 			"CRIU_STREAMER_PRIVATE_SOCK="+strconv.Itoa(streamFd))
+	}
+	if c.streamShmemSock != nil {
+		streamFd := extraFilesStartFd + len(extraFiles)
+		extraFiles = append(extraFiles, c.streamShmemSock)
+		if cmd.Env == nil {
+			cmd.Env = os.Environ()
+		}
+		cmd.Env = append(cmd.Env,
+			"CRIU_STREAMER_SHMEM_SOCK="+strconv.Itoa(streamFd))
 	}
 
 	cmd.ExtraFiles = extraFiles
