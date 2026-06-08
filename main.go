@@ -25,6 +25,7 @@ type Criu struct {
 	inheritFds        map[string]*os.File
 	streamPrivateSock *os.File
 	streamShmemSock   *os.File
+	memfdCacheSock    *os.File
 }
 
 // MakeCriu returns the Criu object required for most operations
@@ -59,6 +60,19 @@ func (c *Criu) SetStreamPrivateSock(file *os.File) {
 // CRIU_STREAMER_SHMEM_SOCK env var.
 func (c *Criu) SetStreamShmemSock(file *os.File) {
 	c.streamShmemSock = file
+}
+
+// SetMemfdCacheSock registers the node-local memfd content cache socket.
+// CRIU (restore) writes GET/DONATE requests and exchanges populated, sealed
+// memfds with the cache server over SCM_RIGHTS. The fd is passed to criu swrk
+// via ExtraFiles (after AddInheritFd and the streamer sockets) and discovered
+// through the CRIU_MEMFD_CACHE_SOCK env var.
+//
+// Pair with CriuOpts.MemfdCache = proto.Bool(true) and
+// CriuOpts.MemfdCacheId = proto.String("<checkpointID>:<version>"). Without the
+// flag and id the socket is ignored on the CRIU side.
+func (c *Criu) SetMemfdCacheSock(file *os.File) {
+	c.memfdCacheSock = file
 }
 
 // AddInheritFd registers a file descriptor to be passed to CRIU.
@@ -153,6 +167,19 @@ func (c *Criu) doPrepare(opts *rpc.CriuOpts) error {
 		}
 		cmd.Env = append(cmd.Env,
 			"CRIU_STREAMER_SHMEM_SOCK="+strconv.Itoa(streamFd))
+	}
+
+	// Memfd content cache socket goes last so its fd number is deterministic
+	// from the CRIU side via CRIU_MEMFD_CACHE_SOCK regardless of how many
+	// inherit/streamer fds precede it.
+	if c.memfdCacheSock != nil {
+		cacheFd := extraFilesStartFd + len(extraFiles)
+		extraFiles = append(extraFiles, c.memfdCacheSock)
+		if cmd.Env == nil {
+			cmd.Env = os.Environ()
+		}
+		cmd.Env = append(cmd.Env,
+			"CRIU_MEMFD_CACHE_SOCK="+strconv.Itoa(cacheFd))
 	}
 
 	cmd.ExtraFiles = extraFiles

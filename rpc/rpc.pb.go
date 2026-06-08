@@ -754,6 +754,8 @@ type CriuOpts struct {
 	DisplayStats         *bool                  `protobuf:"varint,70,opt,name=display_stats,json=displayStats" json:"display_stats,omitempty"`
 	LogToStderr          *bool                  `protobuf:"varint,71,opt,name=log_to_stderr,json=logToStderr" json:"log_to_stderr,omitempty"`
 	StreamRestore        *bool                  `protobuf:"varint,72,opt,name=stream_restore,json=streamRestore" json:"stream_restore,omitempty"`
+	MemfdCache           *bool                  `protobuf:"varint,73,opt,name=memfd_cache,json=memfdCache" json:"memfd_cache,omitempty"`        // node-local memfd content cache: share sealed populated memfds across restores
+	MemfdCacheId         *string                `protobuf:"bytes,74,opt,name=memfd_cache_id,json=memfdCacheId" json:"memfd_cache_id,omitempty"` // cache scope key "checkpointID:version"
 	// optional bool			check_mounts		= 128;
 	Stream        *bool `protobuf:"varint,129,opt,name=stream" json:"stream,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1297,6 +1299,20 @@ func (x *CriuOpts) GetStreamRestore() bool {
 	return false
 }
 
+func (x *CriuOpts) GetMemfdCache() bool {
+	if x != nil && x.MemfdCache != nil {
+		return *x.MemfdCache
+	}
+	return false
+}
+
+func (x *CriuOpts) GetMemfdCacheId() string {
+	if x != nil && x.MemfdCacheId != nil {
+		return *x.MemfdCacheId
+	}
+	return ""
+}
+
 func (x *CriuOpts) GetStream() bool {
 	if x != nil && x.Stream != nil {
 		return *x.Stream
@@ -1834,7 +1850,7 @@ const file_rpc_rpc_proto_rawDesc = "" +
 	"\x04ctrl\x18\x01 \x01(\tR\x04ctrl\x12\x12\n" +
 	"\x04path\x18\x02 \x02(\tR\x04path\"\x1f\n" +
 	"\aunix_sk\x12\x14\n" +
-	"\x05inode\x18\x01 \x02(\rR\x05inode\"\xa4\x14\n" +
+	"\x05inode\x18\x01 \x02(\rR\x05inode\"\xeb\x14\n" +
 	"\tcriu_opts\x12&\n" +
 	"\rimages_dir_fd\x18\x01 \x02(\x05:\x02-1R\vimagesDirFd\x12\x1d\n" +
 	"\n" +
@@ -1925,7 +1941,10 @@ const file_rpc_rpc_proto_rawDesc = "" +
 	"\rleave_stopped\x18E \x01(\bR\fleaveStopped\x12#\n" +
 	"\rdisplay_stats\x18F \x01(\bR\fdisplayStats\x12\"\n" +
 	"\rlog_to_stderr\x18G \x01(\bR\vlogToStderr\x12%\n" +
-	"\x0estream_restore\x18H \x01(\bR\rstreamRestore\x12\x17\n" +
+	"\x0estream_restore\x18H \x01(\bR\rstreamRestore\x12\x1f\n" +
+	"\vmemfd_cache\x18I \x01(\bR\n" +
+	"memfdCache\x12$\n" +
+	"\x0ememfd_cache_id\x18J \x01(\tR\fmemfdCacheId\x12\x17\n" +
 	"\x06stream\x18\x81\x01 \x01(\bR\x06stream\",\n" +
 	"\x0ecriu_dump_resp\x12\x1a\n" +
 	"\brestored\x18\x01 \x01(\bR\brestored\"%\n" +
