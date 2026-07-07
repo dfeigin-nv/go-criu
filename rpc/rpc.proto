@@ -148,6 +148,17 @@ message criu_opts {
 	optional bool			stream_restore		= 72;
 	optional bool			memfd_cache		= 73;	/* node-local memfd content cache: share sealed populated memfds across restores */
 	optional string			memfd_cache_id		= 74;	/* cache scope key "checkpointID:version" */
+	/*
+	 * Memory page compression (CRIU PR #2895). Upstream assigns tags 72-75;
+	 * remapped to 75-78 here to avoid the fork's stream_restore(72)/
+	 * memfd_cache(73)/memfd_cache_id(74). Must match dfeigin-nv/criu.
+	 *   compress: enum compress_mode 0=off, 1=per-page, 2=region
+	 *   decompress_threads: restore-side parallel decompression workers
+	 */
+	optional uint32			compress		= 75;
+	optional uint32			compress_acceleration	= 76;
+	optional uint32			compress_region_size	= 77;
+	optional uint32			decompress_threads	= 78;
 /*	optional bool			check_mounts		= 128;	*/
 	optional bool			stream			= 129;
 }

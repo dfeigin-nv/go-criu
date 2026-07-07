@@ -756,6 +756,16 @@ type CriuOpts struct {
 	StreamRestore        *bool                  `protobuf:"varint,72,opt,name=stream_restore,json=streamRestore" json:"stream_restore,omitempty"`
 	MemfdCache           *bool                  `protobuf:"varint,73,opt,name=memfd_cache,json=memfdCache" json:"memfd_cache,omitempty"`        // node-local memfd content cache: share sealed populated memfds across restores
 	MemfdCacheId         *string                `protobuf:"bytes,74,opt,name=memfd_cache_id,json=memfdCacheId" json:"memfd_cache_id,omitempty"` // cache scope key "checkpointID:version"
+	// Memory page compression (CRIU PR #2895). Upstream assigns tags 72-75;
+	// remapped to 75-78 here to avoid the fork's stream_restore(72)/
+	// memfd_cache(73)/memfd_cache_id(74). Must match dfeigin-nv/criu.
+	//
+	//	compress: enum compress_mode 0=off, 1=per-page, 2=region
+	//	decompress_threads: restore-side parallel decompression workers
+	Compress             *uint32 `protobuf:"varint,75,opt,name=compress" json:"compress,omitempty"`
+	CompressAcceleration *uint32 `protobuf:"varint,76,opt,name=compress_acceleration,json=compressAcceleration" json:"compress_acceleration,omitempty"`
+	CompressRegionSize   *uint32 `protobuf:"varint,77,opt,name=compress_region_size,json=compressRegionSize" json:"compress_region_size,omitempty"`
+	DecompressThreads    *uint32 `protobuf:"varint,78,opt,name=decompress_threads,json=decompressThreads" json:"decompress_threads,omitempty"`
 	// optional bool			check_mounts		= 128;
 	Stream        *bool `protobuf:"varint,129,opt,name=stream" json:"stream,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1313,6 +1323,34 @@ func (x *CriuOpts) GetMemfdCacheId() string {
 	return ""
 }
 
+func (x *CriuOpts) GetCompress() uint32 {
+	if x != nil && x.Compress != nil {
+		return *x.Compress
+	}
+	return 0
+}
+
+func (x *CriuOpts) GetCompressAcceleration() uint32 {
+	if x != nil && x.CompressAcceleration != nil {
+		return *x.CompressAcceleration
+	}
+	return 0
+}
+
+func (x *CriuOpts) GetCompressRegionSize() uint32 {
+	if x != nil && x.CompressRegionSize != nil {
+		return *x.CompressRegionSize
+	}
+	return 0
+}
+
+func (x *CriuOpts) GetDecompressThreads() uint32 {
+	if x != nil && x.DecompressThreads != nil {
+		return *x.DecompressThreads
+	}
+	return 0
+}
+
 func (x *CriuOpts) GetStream() bool {
 	if x != nil && x.Stream != nil {
 		return *x.Stream
@@ -1850,7 +1888,7 @@ const file_rpc_rpc_proto_rawDesc = "" +
 	"\x04ctrl\x18\x01 \x01(\tR\x04ctrl\x12\x12\n" +
 	"\x04path\x18\x02 \x02(\tR\x04path\"\x1f\n" +
 	"\aunix_sk\x12\x14\n" +
-	"\x05inode\x18\x01 \x02(\rR\x05inode\"\xeb\x14\n" +
+	"\x05inode\x18\x01 \x02(\rR\x05inode\"\x9d\x16\n" +
 	"\tcriu_opts\x12&\n" +
 	"\rimages_dir_fd\x18\x01 \x02(\x05:\x02-1R\vimagesDirFd\x12\x1d\n" +
 	"\n" +
@@ -1944,7 +1982,11 @@ const file_rpc_rpc_proto_rawDesc = "" +
 	"\x0estream_restore\x18H \x01(\bR\rstreamRestore\x12\x1f\n" +
 	"\vmemfd_cache\x18I \x01(\bR\n" +
 	"memfdCache\x12$\n" +
-	"\x0ememfd_cache_id\x18J \x01(\tR\fmemfdCacheId\x12\x17\n" +
+	"\x0ememfd_cache_id\x18J \x01(\tR\fmemfdCacheId\x12\x1a\n" +
+	"\bcompress\x18K \x01(\rR\bcompress\x123\n" +
+	"\x15compress_acceleration\x18L \x01(\rR\x14compressAcceleration\x120\n" +
+	"\x14compress_region_size\x18M \x01(\rR\x12compressRegionSize\x12-\n" +
+	"\x12decompress_threads\x18N \x01(\rR\x11decompressThreads\x12\x17\n" +
 	"\x06stream\x18\x81\x01 \x01(\bR\x06stream\",\n" +
 	"\x0ecriu_dump_resp\x12\x1a\n" +
 	"\brestored\x18\x01 \x01(\bR\brestored\"%\n" +
