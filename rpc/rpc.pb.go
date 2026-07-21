@@ -209,6 +209,62 @@ func (CriuPreDumpMode) EnumDescriptor() ([]byte, []int) {
 	return file_rpc_rpc_proto_rawDescGZIP(), []int{2}
 }
 
+type CriuImageIoMode int32
+
+const (
+	CriuImageIoMode_IMAGE_IO_WRITEBACK CriuImageIoMode = 0
+	CriuImageIoMode_IMAGE_IO_DIRECT    CriuImageIoMode = 1
+)
+
+// Enum value maps for CriuImageIoMode.
+var (
+	CriuImageIoMode_name = map[int32]string{
+		0: "IMAGE_IO_WRITEBACK",
+		1: "IMAGE_IO_DIRECT",
+	}
+	CriuImageIoMode_value = map[string]int32{
+		"IMAGE_IO_WRITEBACK": 0,
+		"IMAGE_IO_DIRECT":    1,
+	}
+)
+
+func (x CriuImageIoMode) Enum() *CriuImageIoMode {
+	p := new(CriuImageIoMode)
+	*p = x
+	return p
+}
+
+func (x CriuImageIoMode) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (CriuImageIoMode) Descriptor() protoreflect.EnumDescriptor {
+	return file_rpc_rpc_proto_enumTypes[3].Descriptor()
+}
+
+func (CriuImageIoMode) Type() protoreflect.EnumType {
+	return &file_rpc_rpc_proto_enumTypes[3]
+}
+
+func (x CriuImageIoMode) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Do not use.
+func (x *CriuImageIoMode) UnmarshalJSON(b []byte) error {
+	num, err := protoimpl.X.UnmarshalJSONEnum(x.Descriptor(), b)
+	if err != nil {
+		return err
+	}
+	*x = CriuImageIoMode(num)
+	return nil
+}
+
+// Deprecated: Use CriuImageIoMode.Descriptor instead.
+func (CriuImageIoMode) EnumDescriptor() ([]byte, []int) {
+	return file_rpc_rpc_proto_rawDescGZIP(), []int{3}
+}
+
 type CriuReqType int32
 
 const (
@@ -275,11 +331,11 @@ func (x CriuReqType) String() string {
 }
 
 func (CriuReqType) Descriptor() protoreflect.EnumDescriptor {
-	return file_rpc_rpc_proto_enumTypes[3].Descriptor()
+	return file_rpc_rpc_proto_enumTypes[4].Descriptor()
 }
 
 func (CriuReqType) Type() protoreflect.EnumType {
-	return &file_rpc_rpc_proto_enumTypes[3]
+	return &file_rpc_rpc_proto_enumTypes[4]
 }
 
 func (x CriuReqType) Number() protoreflect.EnumNumber {
@@ -298,7 +354,7 @@ func (x *CriuReqType) UnmarshalJSON(b []byte) error {
 
 // Deprecated: Use CriuReqType.Descriptor instead.
 func (CriuReqType) EnumDescriptor() ([]byte, []int) {
-	return file_rpc_rpc_proto_rawDescGZIP(), []int{3}
+	return file_rpc_rpc_proto_rawDescGZIP(), []int{4}
 }
 
 type CriuPageServerInfo struct {
@@ -753,9 +809,10 @@ type CriuOpts struct {
 	LeaveStopped         *bool                  `protobuf:"varint,69,opt,name=leave_stopped,json=leaveStopped" json:"leave_stopped,omitempty"`
 	DisplayStats         *bool                  `protobuf:"varint,70,opt,name=display_stats,json=displayStats" json:"display_stats,omitempty"`
 	LogToStderr          *bool                  `protobuf:"varint,71,opt,name=log_to_stderr,json=logToStderr" json:"log_to_stderr,omitempty"`
-	StreamRestore        *bool                  `protobuf:"varint,72,opt,name=stream_restore,json=streamRestore" json:"stream_restore,omitempty"`
-	MemfdCache           *bool                  `protobuf:"varint,73,opt,name=memfd_cache,json=memfdCache" json:"memfd_cache,omitempty"`        // node-local memfd content cache: share sealed populated memfds across restores
-	MemfdCacheId         *string                `protobuf:"bytes,74,opt,name=memfd_cache_id,json=memfdCacheId" json:"memfd_cache_id,omitempty"` // cache scope key "checkpointID:version"
+	ImageIoMode          *CriuImageIoMode       `protobuf:"varint,72,opt,name=image_io_mode,json=imageIoMode,enum=CriuImageIoMode,def=0" json:"image_io_mode,omitempty"`
+	MemfdCache           *bool                  `protobuf:"varint,73,opt,name=memfd_cache,json=memfdCache" json:"memfd_cache,omitempty"`          // node-local memfd content cache: share sealed populated memfds across restores
+	MemfdCacheId         *string                `protobuf:"bytes,74,opt,name=memfd_cache_id,json=memfdCacheId" json:"memfd_cache_id,omitempty"`   // cache scope key "checkpointID:version"
+	StreamRestore        *bool                  `protobuf:"varint,75,opt,name=stream_restore,json=streamRestore" json:"stream_restore,omitempty"` // moved from 72 (now image_io_mode); Pipeline C, dormant on the memfd-cache build
 	// optional bool			check_mounts		= 128;
 	Stream        *bool `protobuf:"varint,129,opt,name=stream" json:"stream,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -770,6 +827,7 @@ const (
 	Default_CriuOpts_GhostLimit  = uint32(1048576)
 	Default_CriuOpts_PreDumpMode = CriuPreDumpMode_SPLICE
 	Default_CriuOpts_NetworkLock = CriuNetworkLockMethod_IPTABLES
+	Default_CriuOpts_ImageIoMode = CriuImageIoMode_IMAGE_IO_WRITEBACK
 )
 
 func (x *CriuOpts) Reset() {
@@ -1292,11 +1350,11 @@ func (x *CriuOpts) GetLogToStderr() bool {
 	return false
 }
 
-func (x *CriuOpts) GetStreamRestore() bool {
-	if x != nil && x.StreamRestore != nil {
-		return *x.StreamRestore
+func (x *CriuOpts) GetImageIoMode() CriuImageIoMode {
+	if x != nil && x.ImageIoMode != nil {
+		return *x.ImageIoMode
 	}
-	return false
+	return Default_CriuOpts_ImageIoMode
 }
 
 func (x *CriuOpts) GetMemfdCache() bool {
@@ -1311,6 +1369,13 @@ func (x *CriuOpts) GetMemfdCacheId() string {
 		return *x.MemfdCacheId
 	}
 	return ""
+}
+
+func (x *CriuOpts) GetStreamRestore() bool {
+	if x != nil && x.StreamRestore != nil {
+		return *x.StreamRestore
+	}
+	return false
 }
 
 func (x *CriuOpts) GetStream() bool {
@@ -1850,7 +1915,7 @@ const file_rpc_rpc_proto_rawDesc = "" +
 	"\x04ctrl\x18\x01 \x01(\tR\x04ctrl\x12\x12\n" +
 	"\x04path\x18\x02 \x02(\tR\x04path\"\x1f\n" +
 	"\aunix_sk\x12\x14\n" +
-	"\x05inode\x18\x01 \x02(\rR\x05inode\"\xeb\x14\n" +
+	"\x05inode\x18\x01 \x02(\rR\x05inode\"\xb8\x15\n" +
 	"\tcriu_opts\x12&\n" +
 	"\rimages_dir_fd\x18\x01 \x02(\x05:\x02-1R\vimagesDirFd\x12\x1d\n" +
 	"\n" +
@@ -1940,11 +2005,12 @@ const file_rpc_rpc_proto_rawDesc = "" +
 	"\funprivileged\x18C \x01(\bR\funprivileged\x12#\n" +
 	"\rleave_stopped\x18E \x01(\bR\fleaveStopped\x12#\n" +
 	"\rdisplay_stats\x18F \x01(\bR\fdisplayStats\x12\"\n" +
-	"\rlog_to_stderr\x18G \x01(\bR\vlogToStderr\x12%\n" +
-	"\x0estream_restore\x18H \x01(\bR\rstreamRestore\x12\x1f\n" +
+	"\rlog_to_stderr\x18G \x01(\bR\vlogToStderr\x12K\n" +
+	"\rimage_io_mode\x18H \x01(\x0e2\x13.criu_image_io_mode:\x12IMAGE_IO_WRITEBACKR\vimageIoMode\x12\x1f\n" +
 	"\vmemfd_cache\x18I \x01(\bR\n" +
 	"memfdCache\x12$\n" +
-	"\x0ememfd_cache_id\x18J \x01(\tR\fmemfdCacheId\x12\x17\n" +
+	"\x0ememfd_cache_id\x18J \x01(\tR\fmemfdCacheId\x12%\n" +
+	"\x0estream_restore\x18K \x01(\bR\rstreamRestore\x12\x17\n" +
 	"\x06stream\x18\x81\x01 \x01(\bR\x06stream\",\n" +
 	"\x0ecriu_dump_resp\x12\x1a\n" +
 	"\brestored\x18\x01 \x01(\bR\brestored\"%\n" +
@@ -2004,7 +2070,10 @@ const file_rpc_rpc_proto_rawDesc = "" +
 	"\x12criu_pre_dump_mode\x12\n" +
 	"\n" +
 	"\x06SPLICE\x10\x01\x12\v\n" +
-	"\aVM_READ\x10\x02*\xe5\x01\n" +
+	"\aVM_READ\x10\x02*A\n" +
+	"\x12criu_image_io_mode\x12\x16\n" +
+	"\x12IMAGE_IO_WRITEBACK\x10\x00\x12\x13\n" +
+	"\x0fIMAGE_IO_DIRECT\x10\x01*\xe5\x01\n" +
 	"\rcriu_req_type\x12\t\n" +
 	"\x05EMPTY\x10\x00\x12\b\n" +
 	"\x04DUMP\x10\x01\x12\v\n" +
@@ -2035,55 +2104,57 @@ func file_rpc_rpc_proto_rawDescGZIP() []byte {
 	return file_rpc_rpc_proto_rawDescData
 }
 
-var file_rpc_rpc_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
+var file_rpc_rpc_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
 var file_rpc_rpc_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_rpc_rpc_proto_goTypes = []any{
 	(CriuCgMode)(0),            // 0: criu_cg_mode
 	(CriuNetworkLockMethod)(0), // 1: criu_network_lock_method
 	(CriuPreDumpMode)(0),       // 2: criu_pre_dump_mode
-	(CriuReqType)(0),           // 3: criu_req_type
-	(*CriuPageServerInfo)(nil), // 4: criu_page_server_info
-	(*CriuVethPair)(nil),       // 5: criu_veth_pair
-	(*ExtMountMap)(nil),        // 6: ext_mount_map
-	(*JoinNamespace)(nil),      // 7: join_namespace
-	(*InheritFd)(nil),          // 8: inherit_fd
-	(*CgroupRoot)(nil),         // 9: cgroup_root
-	(*UnixSk)(nil),             // 10: unix_sk
-	(*CriuOpts)(nil),           // 11: criu_opts
-	(*CriuDumpResp)(nil),       // 12: criu_dump_resp
-	(*CriuRestoreResp)(nil),    // 13: criu_restore_resp
-	(*CriuNotify)(nil),         // 14: criu_notify
-	(*CriuFeatures)(nil),       // 15: criu_features
-	(*CriuReq)(nil),            // 16: criu_req
-	(*CriuResp)(nil),           // 17: criu_resp
-	(*CriuVersion)(nil),        // 18: criu_version
+	(CriuImageIoMode)(0),       // 3: criu_image_io_mode
+	(CriuReqType)(0),           // 4: criu_req_type
+	(*CriuPageServerInfo)(nil), // 5: criu_page_server_info
+	(*CriuVethPair)(nil),       // 6: criu_veth_pair
+	(*ExtMountMap)(nil),        // 7: ext_mount_map
+	(*JoinNamespace)(nil),      // 8: join_namespace
+	(*InheritFd)(nil),          // 9: inherit_fd
+	(*CgroupRoot)(nil),         // 10: cgroup_root
+	(*UnixSk)(nil),             // 11: unix_sk
+	(*CriuOpts)(nil),           // 12: criu_opts
+	(*CriuDumpResp)(nil),       // 13: criu_dump_resp
+	(*CriuRestoreResp)(nil),    // 14: criu_restore_resp
+	(*CriuNotify)(nil),         // 15: criu_notify
+	(*CriuFeatures)(nil),       // 16: criu_features
+	(*CriuReq)(nil),            // 17: criu_req
+	(*CriuResp)(nil),           // 18: criu_resp
+	(*CriuVersion)(nil),        // 19: criu_version
 }
 var file_rpc_rpc_proto_depIdxs = []int32{
-	4,  // 0: criu_opts.ps:type_name -> criu_page_server_info
-	5,  // 1: criu_opts.veths:type_name -> criu_veth_pair
-	6,  // 2: criu_opts.ext_mnt:type_name -> ext_mount_map
-	9,  // 3: criu_opts.cg_root:type_name -> cgroup_root
-	8,  // 4: criu_opts.inherit_fd:type_name -> inherit_fd
-	10, // 5: criu_opts.unix_sk_ino:type_name -> unix_sk
+	5,  // 0: criu_opts.ps:type_name -> criu_page_server_info
+	6,  // 1: criu_opts.veths:type_name -> criu_veth_pair
+	7,  // 2: criu_opts.ext_mnt:type_name -> ext_mount_map
+	10, // 3: criu_opts.cg_root:type_name -> cgroup_root
+	9,  // 4: criu_opts.inherit_fd:type_name -> inherit_fd
+	11, // 5: criu_opts.unix_sk_ino:type_name -> unix_sk
 	0,  // 6: criu_opts.manage_cgroups_mode:type_name -> criu_cg_mode
-	7,  // 7: criu_opts.join_ns:type_name -> join_namespace
+	8,  // 7: criu_opts.join_ns:type_name -> join_namespace
 	2,  // 8: criu_opts.pre_dump_mode:type_name -> criu_pre_dump_mode
 	1,  // 9: criu_opts.network_lock:type_name -> criu_network_lock_method
-	3,  // 10: criu_req.type:type_name -> criu_req_type
-	11, // 11: criu_req.opts:type_name -> criu_opts
-	15, // 12: criu_req.features:type_name -> criu_features
-	3,  // 13: criu_resp.type:type_name -> criu_req_type
-	12, // 14: criu_resp.dump:type_name -> criu_dump_resp
-	13, // 15: criu_resp.restore:type_name -> criu_restore_resp
-	14, // 16: criu_resp.notify:type_name -> criu_notify
-	4,  // 17: criu_resp.ps:type_name -> criu_page_server_info
-	15, // 18: criu_resp.features:type_name -> criu_features
-	18, // 19: criu_resp.version:type_name -> criu_version
-	20, // [20:20] is the sub-list for method output_type
-	20, // [20:20] is the sub-list for method input_type
-	20, // [20:20] is the sub-list for extension type_name
-	20, // [20:20] is the sub-list for extension extendee
-	0,  // [0:20] is the sub-list for field type_name
+	3,  // 10: criu_opts.image_io_mode:type_name -> criu_image_io_mode
+	4,  // 11: criu_req.type:type_name -> criu_req_type
+	12, // 12: criu_req.opts:type_name -> criu_opts
+	16, // 13: criu_req.features:type_name -> criu_features
+	4,  // 14: criu_resp.type:type_name -> criu_req_type
+	13, // 15: criu_resp.dump:type_name -> criu_dump_resp
+	14, // 16: criu_resp.restore:type_name -> criu_restore_resp
+	15, // 17: criu_resp.notify:type_name -> criu_notify
+	5,  // 18: criu_resp.ps:type_name -> criu_page_server_info
+	16, // 19: criu_resp.features:type_name -> criu_features
+	19, // 20: criu_resp.version:type_name -> criu_version
+	21, // [21:21] is the sub-list for method output_type
+	21, // [21:21] is the sub-list for method input_type
+	21, // [21:21] is the sub-list for extension type_name
+	21, // [21:21] is the sub-list for extension extendee
+	0,  // [0:21] is the sub-list for field type_name
 }
 
 func init() { file_rpc_rpc_proto_init() }
@@ -2096,7 +2167,7 @@ func file_rpc_rpc_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_rpc_rpc_proto_rawDesc), len(file_rpc_rpc_proto_rawDesc)),
-			NumEnums:      4,
+			NumEnums:      5,
 			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   0,
