@@ -154,6 +154,16 @@ message criu_opts {
 	optional bool			memfd_cache		= 73;	/* node-local memfd content cache: share sealed populated memfds across restores */
 	optional string			memfd_cache_id		= 74;	/* cache scope key "checkpointID:version" */
 	optional bool			stream_restore		= 75;	/* moved from 72 (now image_io_mode); Pipeline C, dormant on the memfd-cache build */
+	/*
+	 * Memory page compression (PR #2895), renumbered from upstream's 72-75 to
+	 * 76+ so it does not collide with the fork's 72-75
+	 * (image_io_mode/memfd_cache/memfd_cache_id/stream_restore). Tags must
+	 * match criu/images/rpc.proto exactly. compress mode: 0=off, 1=per-page, 2=region.
+	 */
+	optional uint32			compress		= 76;
+	optional uint32			compress_acceleration	= 77;
+	optional uint32			compress_region_size	= 78;
+	optional uint32			decompress_threads	= 79;
 /*	optional bool			check_mounts		= 128;	*/
 	optional bool			stream			= 129;
 }
