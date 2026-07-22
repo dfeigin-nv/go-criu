@@ -151,9 +151,19 @@ message criu_opts {
 	optional bool			display_stats		= 70;
 	optional bool			log_to_stderr		= 71;
 	optional criu_image_io_mode	image_io_mode		= 72 [default = IMAGE_IO_WRITEBACK];
-	optional bool			memfd_cache		= 73;	/* node-local memfd content cache: share sealed populated memfds across restores */
-	optional string			memfd_cache_id		= 74;	/* cache scope key "checkpointID:version" */
-	optional bool			stream_restore		= 75;	/* moved from 72 (now image_io_mode); Pipeline C, dormant on the memfd-cache build */
+	/* Memory page compression -- tags MUST match upstream criu (73-76). */
+	optional uint32			compress		= 73;
+	optional uint32			compress_acceleration	= 74;
+	optional uint32			compress_region_size	= 75;
+	optional uint32			decompress_threads	= 76 [default = 1];
+	/*
+	 * Fork fields, renumbered above upstream compress to match
+	 * dfeigin-nv/criu:memfd-imageio-on-upstream. memfd_cache/id have criu
+	 * counterparts at 77/78; stream_restore (79) is go-criu/agent-only.
+	 */
+	optional bool			memfd_cache		= 77;	/* node-local memfd content cache: share sealed populated memfds across restores */
+	optional string			memfd_cache_id		= 78;	/* cache scope key "checkpointID:version" */
+	optional bool			stream_restore		= 79;	/* Pipeline C, dormant on the memfd-cache build */
 /*	optional bool			check_mounts		= 128;	*/
 	optional bool			stream			= 129;
 }

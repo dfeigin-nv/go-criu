@@ -810,9 +810,17 @@ type CriuOpts struct {
 	DisplayStats         *bool                  `protobuf:"varint,70,opt,name=display_stats,json=displayStats" json:"display_stats,omitempty"`
 	LogToStderr          *bool                  `protobuf:"varint,71,opt,name=log_to_stderr,json=logToStderr" json:"log_to_stderr,omitempty"`
 	ImageIoMode          *CriuImageIoMode       `protobuf:"varint,72,opt,name=image_io_mode,json=imageIoMode,enum=CriuImageIoMode,def=0" json:"image_io_mode,omitempty"`
-	MemfdCache           *bool                  `protobuf:"varint,73,opt,name=memfd_cache,json=memfdCache" json:"memfd_cache,omitempty"`          // node-local memfd content cache: share sealed populated memfds across restores
-	MemfdCacheId         *string                `protobuf:"bytes,74,opt,name=memfd_cache_id,json=memfdCacheId" json:"memfd_cache_id,omitempty"`   // cache scope key "checkpointID:version"
-	StreamRestore        *bool                  `protobuf:"varint,75,opt,name=stream_restore,json=streamRestore" json:"stream_restore,omitempty"` // moved from 72 (now image_io_mode); Pipeline C, dormant on the memfd-cache build
+	// Memory page compression -- tags MUST match upstream criu (73-76).
+	Compress             *uint32 `protobuf:"varint,73,opt,name=compress" json:"compress,omitempty"`
+	CompressAcceleration *uint32 `protobuf:"varint,74,opt,name=compress_acceleration,json=compressAcceleration" json:"compress_acceleration,omitempty"`
+	CompressRegionSize   *uint32 `protobuf:"varint,75,opt,name=compress_region_size,json=compressRegionSize" json:"compress_region_size,omitempty"`
+	DecompressThreads    *uint32 `protobuf:"varint,76,opt,name=decompress_threads,json=decompressThreads,def=1" json:"decompress_threads,omitempty"`
+	// Fork fields, renumbered above upstream compress to match
+	// dfeigin-nv/criu:memfd-imageio-on-upstream. memfd_cache/id have criu
+	// counterparts at 77/78; stream_restore (79) is go-criu/agent-only.
+	MemfdCache    *bool   `protobuf:"varint,77,opt,name=memfd_cache,json=memfdCache" json:"memfd_cache,omitempty"`          // node-local memfd content cache: share sealed populated memfds across restores
+	MemfdCacheId  *string `protobuf:"bytes,78,opt,name=memfd_cache_id,json=memfdCacheId" json:"memfd_cache_id,omitempty"`   // cache scope key "checkpointID:version"
+	StreamRestore *bool   `protobuf:"varint,79,opt,name=stream_restore,json=streamRestore" json:"stream_restore,omitempty"` // Pipeline C, dormant on the memfd-cache build
 	// optional bool			check_mounts		= 128;
 	Stream        *bool `protobuf:"varint,129,opt,name=stream" json:"stream,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -821,13 +829,14 @@ type CriuOpts struct {
 
 // Default values for CriuOpts fields.
 const (
-	Default_CriuOpts_ImagesDirFd = int32(-1)
-	Default_CriuOpts_LogLevel    = int32(2)
-	Default_CriuOpts_CpuCap      = uint32(4294967295)
-	Default_CriuOpts_GhostLimit  = uint32(1048576)
-	Default_CriuOpts_PreDumpMode = CriuPreDumpMode_SPLICE
-	Default_CriuOpts_NetworkLock = CriuNetworkLockMethod_IPTABLES
-	Default_CriuOpts_ImageIoMode = CriuImageIoMode_IMAGE_IO_WRITEBACK
+	Default_CriuOpts_ImagesDirFd       = int32(-1)
+	Default_CriuOpts_LogLevel          = int32(2)
+	Default_CriuOpts_CpuCap            = uint32(4294967295)
+	Default_CriuOpts_GhostLimit        = uint32(1048576)
+	Default_CriuOpts_PreDumpMode       = CriuPreDumpMode_SPLICE
+	Default_CriuOpts_NetworkLock       = CriuNetworkLockMethod_IPTABLES
+	Default_CriuOpts_ImageIoMode       = CriuImageIoMode_IMAGE_IO_WRITEBACK
+	Default_CriuOpts_DecompressThreads = uint32(1)
 )
 
 func (x *CriuOpts) Reset() {
@@ -1355,6 +1364,34 @@ func (x *CriuOpts) GetImageIoMode() CriuImageIoMode {
 		return *x.ImageIoMode
 	}
 	return Default_CriuOpts_ImageIoMode
+}
+
+func (x *CriuOpts) GetCompress() uint32 {
+	if x != nil && x.Compress != nil {
+		return *x.Compress
+	}
+	return 0
+}
+
+func (x *CriuOpts) GetCompressAcceleration() uint32 {
+	if x != nil && x.CompressAcceleration != nil {
+		return *x.CompressAcceleration
+	}
+	return 0
+}
+
+func (x *CriuOpts) GetCompressRegionSize() uint32 {
+	if x != nil && x.CompressRegionSize != nil {
+		return *x.CompressRegionSize
+	}
+	return 0
+}
+
+func (x *CriuOpts) GetDecompressThreads() uint32 {
+	if x != nil && x.DecompressThreads != nil {
+		return *x.DecompressThreads
+	}
+	return Default_CriuOpts_DecompressThreads
 }
 
 func (x *CriuOpts) GetMemfdCache() bool {
@@ -1915,7 +1952,7 @@ const file_rpc_rpc_proto_rawDesc = "" +
 	"\x04ctrl\x18\x01 \x01(\tR\x04ctrl\x12\x12\n" +
 	"\x04path\x18\x02 \x02(\tR\x04path\"\x1f\n" +
 	"\aunix_sk\x12\x14\n" +
-	"\x05inode\x18\x01 \x02(\rR\x05inode\"\xb8\x15\n" +
+	"\x05inode\x18\x01 \x02(\rR\x05inode\"\xed\x16\n" +
 	"\tcriu_opts\x12&\n" +
 	"\rimages_dir_fd\x18\x01 \x02(\x05:\x02-1R\vimagesDirFd\x12\x1d\n" +
 	"\n" +
@@ -2006,11 +2043,15 @@ const file_rpc_rpc_proto_rawDesc = "" +
 	"\rleave_stopped\x18E \x01(\bR\fleaveStopped\x12#\n" +
 	"\rdisplay_stats\x18F \x01(\bR\fdisplayStats\x12\"\n" +
 	"\rlog_to_stderr\x18G \x01(\bR\vlogToStderr\x12K\n" +
-	"\rimage_io_mode\x18H \x01(\x0e2\x13.criu_image_io_mode:\x12IMAGE_IO_WRITEBACKR\vimageIoMode\x12\x1f\n" +
-	"\vmemfd_cache\x18I \x01(\bR\n" +
+	"\rimage_io_mode\x18H \x01(\x0e2\x13.criu_image_io_mode:\x12IMAGE_IO_WRITEBACKR\vimageIoMode\x12\x1a\n" +
+	"\bcompress\x18I \x01(\rR\bcompress\x123\n" +
+	"\x15compress_acceleration\x18J \x01(\rR\x14compressAcceleration\x120\n" +
+	"\x14compress_region_size\x18K \x01(\rR\x12compressRegionSize\x120\n" +
+	"\x12decompress_threads\x18L \x01(\r:\x011R\x11decompressThreads\x12\x1f\n" +
+	"\vmemfd_cache\x18M \x01(\bR\n" +
 	"memfdCache\x12$\n" +
-	"\x0ememfd_cache_id\x18J \x01(\tR\fmemfdCacheId\x12%\n" +
-	"\x0estream_restore\x18K \x01(\bR\rstreamRestore\x12\x17\n" +
+	"\x0ememfd_cache_id\x18N \x01(\tR\fmemfdCacheId\x12%\n" +
+	"\x0estream_restore\x18O \x01(\bR\rstreamRestore\x12\x17\n" +
 	"\x06stream\x18\x81\x01 \x01(\bR\x06stream\",\n" +
 	"\x0ecriu_dump_resp\x12\x1a\n" +
 	"\brestored\x18\x01 \x01(\bR\brestored\"%\n" +
