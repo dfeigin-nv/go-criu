@@ -159,11 +159,13 @@ message criu_opts {
 	/*
 	 * Fork fields, renumbered above upstream compress to match
 	 * dfeigin-nv/criu:memfd-imageio-on-upstream. memfd_cache/id have criu
-	 * counterparts at 77/78; stream_restore (79) is go-criu/agent-only.
+	 * counterparts at 77/78; stream_restore (79) and stream_private_copy (80)
+	 * have criu counterparts as of stream-restore-continue.
 	 */
 	optional bool			memfd_cache		= 77;	/* node-local memfd content cache: share sealed populated memfds across restores */
 	optional string			memfd_cache_id		= 78;	/* cache scope key "checkpointID:version" */
-	optional bool			stream_restore		= 79;	/* Pipeline C, dormant on the memfd-cache build */
+	optional bool			stream_restore		= 79;	/* streaming restore: memfd + UFFDIO_CONTINUE */
+	optional bool			stream_private_copy	= 80;	/* --stream-private=copy (default: mmap) */
 /*	optional bool			check_mounts		= 128;	*/
 	optional bool			stream			= 129;
 }

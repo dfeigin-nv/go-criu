@@ -817,10 +817,12 @@ type CriuOpts struct {
 	DecompressThreads    *uint32 `protobuf:"varint,76,opt,name=decompress_threads,json=decompressThreads,def=1" json:"decompress_threads,omitempty"`
 	// Fork fields, renumbered above upstream compress to match
 	// dfeigin-nv/criu:memfd-imageio-on-upstream. memfd_cache/id have criu
-	// counterparts at 77/78; stream_restore (79) is go-criu/agent-only.
-	MemfdCache    *bool   `protobuf:"varint,77,opt,name=memfd_cache,json=memfdCache" json:"memfd_cache,omitempty"`          // node-local memfd content cache: share sealed populated memfds across restores
-	MemfdCacheId  *string `protobuf:"bytes,78,opt,name=memfd_cache_id,json=memfdCacheId" json:"memfd_cache_id,omitempty"`   // cache scope key "checkpointID:version"
-	StreamRestore *bool   `protobuf:"varint,79,opt,name=stream_restore,json=streamRestore" json:"stream_restore,omitempty"` // Pipeline C, dormant on the memfd-cache build
+	// counterparts at 77/78; stream_restore (79) and stream_private_copy (80)
+	// have criu counterparts as of stream-restore-continue.
+	MemfdCache        *bool   `protobuf:"varint,77,opt,name=memfd_cache,json=memfdCache" json:"memfd_cache,omitempty"`                        // node-local memfd content cache: share sealed populated memfds across restores
+	MemfdCacheId      *string `protobuf:"bytes,78,opt,name=memfd_cache_id,json=memfdCacheId" json:"memfd_cache_id,omitempty"`                 // cache scope key "checkpointID:version"
+	StreamRestore     *bool   `protobuf:"varint,79,opt,name=stream_restore,json=streamRestore" json:"stream_restore,omitempty"`               // streaming restore: memfd + UFFDIO_CONTINUE
+	StreamPrivateCopy *bool   `protobuf:"varint,80,opt,name=stream_private_copy,json=streamPrivateCopy" json:"stream_private_copy,omitempty"` // --stream-private=copy (default: mmap)
 	// optional bool			check_mounts		= 128;
 	Stream        *bool `protobuf:"varint,129,opt,name=stream" json:"stream,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1415,6 +1417,13 @@ func (x *CriuOpts) GetStreamRestore() bool {
 	return false
 }
 
+func (x *CriuOpts) GetStreamPrivateCopy() bool {
+	if x != nil && x.StreamPrivateCopy != nil {
+		return *x.StreamPrivateCopy
+	}
+	return false
+}
+
 func (x *CriuOpts) GetStream() bool {
 	if x != nil && x.Stream != nil {
 		return *x.Stream
@@ -1952,7 +1961,7 @@ const file_rpc_rpc_proto_rawDesc = "" +
 	"\x04ctrl\x18\x01 \x01(\tR\x04ctrl\x12\x12\n" +
 	"\x04path\x18\x02 \x02(\tR\x04path\"\x1f\n" +
 	"\aunix_sk\x12\x14\n" +
-	"\x05inode\x18\x01 \x02(\rR\x05inode\"\xed\x16\n" +
+	"\x05inode\x18\x01 \x02(\rR\x05inode\"\x9d\x17\n" +
 	"\tcriu_opts\x12&\n" +
 	"\rimages_dir_fd\x18\x01 \x02(\x05:\x02-1R\vimagesDirFd\x12\x1d\n" +
 	"\n" +
@@ -2051,7 +2060,8 @@ const file_rpc_rpc_proto_rawDesc = "" +
 	"\vmemfd_cache\x18M \x01(\bR\n" +
 	"memfdCache\x12$\n" +
 	"\x0ememfd_cache_id\x18N \x01(\tR\fmemfdCacheId\x12%\n" +
-	"\x0estream_restore\x18O \x01(\bR\rstreamRestore\x12\x17\n" +
+	"\x0estream_restore\x18O \x01(\bR\rstreamRestore\x12.\n" +
+	"\x13stream_private_copy\x18P \x01(\bR\x11streamPrivateCopy\x12\x17\n" +
 	"\x06stream\x18\x81\x01 \x01(\bR\x06stream\",\n" +
 	"\x0ecriu_dump_resp\x12\x1a\n" +
 	"\brestored\x18\x01 \x01(\bR\brestored\"%\n" +
